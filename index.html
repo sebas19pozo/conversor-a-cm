@@ -1,112 +1,526 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Imagen sobre A4</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Imagen sobre A4 — Preview / Tips / Panel</title>
+
+<style>
+/* RESET */
+* { box-sizing: border-box; margin:0; padding:0; }
+
+html,body { height:100%; }
+body {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #f6fbf6 0%, #eef7ee 100%);
+  color: #254b25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#app-wrap {
+  width:100%;
+  max-width:1100px;
+  display:flex;
+  gap:28px;
+  align-items:flex-start;
+  justify-content:center;
+}
+
+/* PANEL PRINCIPAL */
+#app-container {
+  background:#fff;
+  border-radius:16px;
+  padding:26px;
+  box-shadow: 0 18px 40px rgba(20,40,20,0.08);
+  width:100%;
+  max-width: 560px;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+#app-container:hover { transform: translateY(-4px); box-shadow: 0 26px 60px rgba(20,40,20,0.10); }
+
+h1 {
+  font-size:1.3rem;
+  color:#2d5a2d;
+  margin-bottom:12px;
+  text-align:center;
+  font-weight:700;
+  letter-spacing: -0.2px;
+}
+
+.subtitle { text-align:center; color:#486a48; font-size:0.95rem; margin-bottom:18px; }
+
+.form-row { margin-bottom:14px; display:flex; flex-direction:column; gap:8px; }
+
+label { font-weight:600; color:#3b6b3b; font-size:0.95rem; }
+
+.input-file, .input-number {
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1.5px solid #cfe6cf;
+  background:#fbfff9;
+  font-size:0.98rem;
+  transition: box-shadow .18s ease, border-color .18s ease, transform .12s ease;
+}
+
+.input-file:hover, .input-number:hover {
+  box-shadow:0 6px 14px rgba(90,140,90,0.12);
+  border-color:#9fce9f;
+}
+
+.input-number:focus, .input-file:focus {
+  outline: none;
+  box-shadow:0 0 10px rgba(78,139,78,0.18);
+  border-color:#5fa35f;
+}
+
+.controls {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-top:6px;
+}
+
+#procesarBtn {
+  margin-top:6px;
+  width:100%;
+  background: linear-gradient(135deg, #c9efc8, #7fc67f);
+  color:#fff;
+  border:none;
+  padding:14px 16px;
+  font-weight:700;
+  font-size:1.02rem;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow: 0 8px 20px rgba(80,150,80,0.18);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+#procesarBtn:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(80,150,80,0.24); }
+#procesarBtn[disabled] { opacity:0.6; cursor:default; transform:none; box-shadow:none; }
+
+#preview-panel {
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  align-items:center;
+}
+
+#a4-frame {
+  background: #dfeee0;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(40,80,40,0.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
+
+#a4-viewport {
+  background: #fff;
+  border: 1px solid #d0e6d0;
+  border-radius:6px;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 21 / 29.7;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  box-shadow: 0 8px 18px rgba(80,140,80,0.06);
+}
+
+#previewCanvas {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+#thumb {
+  width:100%;
+  max-width:160px;
+  height:100px;
+  border-radius:8px;
+  border:1px solid #d7ead7;
+  background:#fbfff9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 8px 18px rgba(80,140,80,0.06);
+}
+
+.thumb-info { font-size:0.88rem; color:#567f56; text-align:center; padding-top:6px; }
+
+/* SIDEBAR */
+#sidebar {
+  width:320px;
+  max-width:34%;
+  min-width:260px;
+  background: linear-gradient(180deg,#fbfff9,#f3f9f3);
+  border-radius:12px;
+  padding:16px;
+  box-shadow: 0 12px 30px rgba(40,80,40,0.06);
+  transition: transform .25s ease, opacity .25s ease;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+#sidebar.collapsed {
+  transform: translateX(12px) scale(.98);
+  opacity:0;
+  pointer-events:none;
+  width:0;
+  padding:0;
+}
+
+#toggleSidebar {
+  border:none;
+  background:#e9f6ea;
+  color:#2f6b2f;
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  box-shadow: 0 6px 14px rgba(80,140,80,0.06);
+}
+#toggleSidebar:hover { transform: translateY(-2px); }
+
+#tips-container {
+  background:#eaf6e8;
+  border-left:6px solid #6fb56f;
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 6px 14px rgba(80,140,80,0.06);
+}
+
+.tips-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.tip-item {
+  background:#fff;
+  border:1px solid #dceedd;
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.tip-item:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(80,140,80,0.08); }
+
+.info-block {
+  background:#f3f9f3;
+  border-radius:10px;
+  padding:10px;
+  border:1px solid #e6f1e6;
+  font-size:0.92rem;
+  color:#496f49;
+}
+
+.footer-note { font-size:0.86rem; color:#6b8a6b; text-align:center; margin-top:8px; }
+
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+  #app-wrap { flex-direction:column; align-items:center; gap:18px; }
+  #sidebar { width:100%; max-width:560px; min-width:auto; }
+}
+@media (max-width: 520px) {
+  #app-container { max-width:100%; padding:18px; }
+  #sidebar { display:none; }
+  #thumb { max-width:130px; height:86px; }
+}
+</style>
 </head>
+
 <body>
 
-<div id="app-container">
-  <h2 id="main-title">Sube imagen → Ajustar tamaño → Colocar en A4 → Descargar</h2>
+<div id="app-wrap">
+  
+  <main id="app-container">
+    <h1 id="app-title">Sube imagen → Ajustar tamaño → Colocar en A4 → Descargar</h1>
+    <div class="subtitle">A4 real a 300 DPI — coloca dimensiones en cm (se forzará el tamaño exacto)</div>
 
-  <div class="input-group">
-    <label for="imagenInput">Selecciona tu imagen:</label>
-    <input type="file" id="imagenInput" class="input-file" accept="image/*">
-  </div>
+    <section id="input-section">
+      <div class="form-row">
+        <label for="imagenInput">Selecciona imagen</label>
+        <input id="imagenInput" class="input-file" type="file" accept="image/*" />
+      </div>
 
-  <div class="input-group">
-    <label for="anchoCm">Ancho deseado de la imagen (cm):</label>
-    <input type="number" id="anchoCm" class="input-number" step="0.1" placeholder="Ej: 10">
-  </div>
+      <div class="form-row">
+        <label for="anchoCm">Ancho deseado (cm)</label>
+        <input id="anchoCm" class="input-number" type="number" step="0.1" placeholder="Ej: 10" />
+      </div>
 
-  <div class="input-group">
-    <label for="altoCm">Alto deseado de la imagen (cm):</label>
-    <input type="number" id="altoCm" class="input-number" step="0.1" placeholder="Ej: 15">
-  </div>
+      <div class="form-row">
+        <label for="altoCm">Alto deseado (cm)</label>
+        <input id="altoCm" class="input-number" type="number" step="0.1" placeholder="Ej: 15" />
+      </div>
 
-  <button id="procesarBtn" class="btn">Procesar y descargar A4</button>
+      <div class="form-row">
+        <button id="procesarBtn">Procesar y descargar A4</button>
+      </div>
 
-  <div id="preview-container">
-    <canvas id="previewCanvas"></canvas>
-  </div>
+      <div class="form-row controls" style="gap:14px;">
+        <div id="thumb"><span id="thumbImgText">Sin imagen</span></div>
+        <div style="flex:1">
+          <div class="thumb-info" id="thumbInfo">Previsualización de la imagen</div>
+          <div class="footer-note" id="statusText"></div>
+        </div>
+      </div>
+    </section>
 
-  <!-- --- Añadir justo antes de cerrar #app-container --- -->
-    <div id="tips-container">
-    <h3>📌 Consejos de tamaño</h3>
-    <ul class="tips-list">
-        <li>Si quieres 9 cm de alto, coloca 12 cm en el formulario.</li>
-        <li>Si quieres 8 cm de alto, coloca 10 cm en el formulario.</li>
-        <li>Si quieres 10 cm de alto, coloca 14 cm en el formulario.</li>
-    </ul>
+    <div class="footer-note" style="margin-top:10px">Puedes usar los tips del panel para autocompletar rápidamente el alto.</div>
+
+    <!-- PANEL DE PREVIEW A4 -->
+    <section id="preview-panel">
+      <div id="a4-frame">
+        <div id="a4-viewport"></div>
+      </div>
+    </section>
+  </main>
+
+  <aside id="sidebar">
+    <div class="sb-header">
+      <strong>Consejos & Ajustes</strong>
+      <button id="toggleSidebar">Ocultar panel</button>
     </div>
+
+    <div id="tips-container">
+      <h3>📌 Consejos de tamaño (clicables)</h3>
+      <ul class="tips-list">
+        <li class="tip-item" data-recommended="12">Si quieres 9 cm → coloca 12 cm</li>
+        <li class="tip-item" data-recommended="10">Si quieres 8 cm → coloca 10 cm</li>
+        <li class="tip-item" data-recommended="14">Si quieres 10 cm → coloca 14 cm</li>
+      </ul>
+    </div>
+
+    <div class="info-block">
+      <strong>Vista previa A4:</strong> La ventana principal muestra una representación a escala del A4 real.
+    </div>
+
+    <div class="info-block">
+      <strong>Nota:</strong> La imagen se fuerza al tamaño exacto que indiques.
+    </div>
+  </aside>
 
 </div>
 
 <script>
 const DPI = 300;
-function cmToPx(cm) { return Math.round(cm * (DPI / 2.54)); }
-const A4_WIDTH_PX  = cmToPx(21);
-const A4_HEIGHT_PX = cmToPx(29.7);
+function cmToPx(cm){ return Math.round(cm * (DPI / 2.54)); }
 
-document.getElementById('procesarBtn').addEventListener('click', async () => {
-    const inputFile = document.getElementById('imagenInput').files[0];
-    const anchoCm = parseFloat(document.getElementById('anchoCm').value);
-    const altoCm = parseFloat(document.getElementById('altoCm').value);
+const A4_W_PX = cmToPx(21);
+const A4_H_PX = cmToPx(29.7);
 
-    if (!inputFile || !anchoCm || !altoCm) {
-        alert('Sube una imagen y completa ancho/alto en cm.');
-        return;
+const imagenInput = document.getElementById('imagenInput');
+const anchoInput = document.getElementById('anchoCm');
+const altoInput = document.getElementById('altoCm');
+const procesarBtn = document.getElementById('procesarBtn');
+
+const previewViewport = document.createElement('canvas');
+const a4ViewportNode = document.getElementById('a4-viewport');
+
+previewViewport.id = 'previewCanvas';
+previewViewport.style.width = '100%';
+previewViewport.style.height = '100%';
+a4ViewportNode.appendChild(previewViewport);
+
+const thumbBox = document.getElementById('thumb');
+const thumbImgText = document.getElementById('thumbImgText');
+const thumbInfo = document.getElementById('thumbInfo');
+const statusText = document.getElementById('statusText');
+
+let currentImage = null;
+
+/* Load file */
+function loadImageFromFile(file){
+  return new Promise((resolve,reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = e=>{ URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+/* THUMB preview */
+function updateThumb(img){
+  thumbBox.innerHTML='';
+  const w = thumbBox.clientWidth;
+  const h = thumbBox.clientHeight;
+  const canvas = document.createElement('canvas');
+  canvas.width = w*devicePixelRatio;
+  canvas.height = h*devicePixelRatio;
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  ctx.fillStyle='#fbfff9';
+  ctx.fillRect(0,0,w,h);
+
+  const ratio = Math.min(w/img.width, h/img.height);
+  const dw = img.width * ratio;
+  const dh = img.height * ratio;
+  const ox = (w-dw)/2;
+  const oy = (h-dh)/2;
+
+  ctx.drawImage(img,0,0,img.width,img.height,ox,oy,dw,dh);
+
+  const visible = document.createElement('canvas');
+  visible.width=w; visible.height=h;
+  visible.getContext('2d').drawImage(canvas,0,0,w,h);
+  thumbBox.appendChild(visible);
+  thumbImgText.style.display='none';
+
+  thumbInfo.textContent = `${img.width}×${img.height}px — Tamaño original`;
+}
+
+/* FINAL A4 CANVAS (real 300 DPI) */
+function createFinalA4Canvas(img, wpx, hpx){
+  const c = document.createElement('canvas');
+  c.width = A4_W_PX;
+  c.height = A4_H_PX;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,c.width,c.height);
+
+  const dx = Math.round((c.width - wpx)/2);
+  const dy = Math.round((c.height - hpx)/2);
+
+  ctx.drawImage(img,0,0,img.width,img.height,dx,dy,wpx,hpx);
+  return c;
+}
+
+/* PREVIEW (scaled) */
+function drawPreviewFromFinal(finalCanvas){
+  const vw = a4ViewportNode.clientWidth;
+  const vh = a4ViewportNode.clientHeight;
+
+  previewViewport.width = Math.round(vw * devicePixelRatio);
+  previewViewport.height = Math.round(vh * devicePixelRatio);
+
+  const ctx = previewViewport.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0,0,vw,vh);
+
+  const scale = Math.min(vw/finalCanvas.width, vh/finalCanvas.height);
+  const dw = finalCanvas.width * scale;
+  const dh = finalCanvas.height * scale;
+  const ox = (vw-dw)/2;
+  const oy = (vh-dh)/2;
+
+  ctx.drawImage(finalCanvas,0,0,finalCanvas.width,finalCanvas.height,ox,oy,dw,dh);
+}
+
+function downloadPNG(canvas){
+  const url = canvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href=url;
+  a.download="A4_con_imagen.png";
+  a.click();
+}
+
+/* PROCESS */
+procesarBtn.addEventListener('click', async ()=>{
+
+  const file = imagenInput.files[0];
+  const wcm = parseFloat(anchoInput.value);
+  const hcm = parseFloat(altoInput.value);
+
+  if(!file) return alert("Sube una imagen");
+  if(!wcm || !hcm) return alert("Rellena ancho y alto");
+
+  procesarBtn.disabled=true;
+  statusText.textContent="Procesando...";
+
+  try{
+    let img;
+    if(currentImage && currentImage.fileRef===file){
+      img = currentImage.img;
+    } else {
+      img = await loadImageFromFile(file);
+      currentImage = { img, fileRef:file };
     }
 
-    const img = await loadImageFromFile(inputFile);
+    updateThumb(img);
 
-    // Redimensionar al tamaño exacto que indique el usuario
-    const targetW = cmToPx(anchoCm);
-    const targetH = cmToPx(altoCm);
-    const resizedW = targetW;
-    const resizedH = targetH;
+    const targetW = cmToPx(wcm);
+    const targetH = cmToPx(hcm);
 
-    const resizedCanvas = document.createElement('canvas');
-    resizedCanvas.width = resizedW;
-    resizedCanvas.height = resizedH;
-    const rctx = resizedCanvas.getContext('2d');
-    rctx.drawImage(img, 0, 0, resizedW, resizedH);
+    const finalCanvas = createFinalA4Canvas(img,targetW,targetH);
+    drawPreviewFromFinal(finalCanvas);
+    downloadPNG(finalCanvas);
 
-    // Crear A4 blanco y pegar imagen centrada
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = A4_WIDTH_PX;
-    finalCanvas.height = A4_HEIGHT_PX;
-    const fctx = finalCanvas.getContext('2d');
-    fctx.fillStyle = 'white';
-    fctx.fillRect(0, 0, A4_WIDTH_PX, A4_HEIGHT_PX);
+    statusText.textContent="Descargado.";
+  } catch(e){
+    console.error(e);
+    alert("Error al procesar.");
+  }
 
-    const offsetX = Math.round((A4_WIDTH_PX - resizedW) / 2);
-    const offsetY = Math.round((A4_HEIGHT_PX - resizedH) / 2);
-    fctx.drawImage(resizedCanvas, offsetX, offsetY);
-
-    // Mostrar preview en canvas opcional
-    const previewCanvas = document.getElementById('previewCanvas');
-    previewCanvas.width = A4_WIDTH_PX / 3; // escala para preview
-    previewCanvas.height = A4_HEIGHT_PX / 3;
-    const pctx = previewCanvas.getContext('2d');
-    pctx.drawImage(finalCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
-
-    // Descargar
-    const link = document.createElement('a');
-    link.download = 'A4_con_imagen.png';
-    link.href = finalCanvas.toDataURL('image/png');
-    link.click();
+  procesarBtn.disabled=false;
+  setTimeout(()=>statusText.textContent="",2000);
 });
 
-function loadImageFromFile(file) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-    });
+/* LIVE UPDATE */
+anchoInput.addEventListener('input', updatePreviewIfReady);
+altoInput.addEventListener('input', updatePreviewIfReady);
+
+function updatePreviewIfReady(){
+  if(!currentImage) return;
+  const w = parseFloat(anchoInput.value)||0;
+  const h = parseFloat(altoInput.value)||0;
+  if(w<=0 || h<=0) return;
+
+  const final = createFinalA4Canvas(currentImage.img, cmToPx(w), cmToPx(h));
+  drawPreviewFromFinal(final);
 }
+
+/* load new image */
+imagenInput.addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  try{
+    const img = await loadImageFromFile(file);
+    currentImage = { img, fileRef:file };
+    updateThumb(img);
+
+    const w = parseFloat(anchoInput.value)||0;
+    const h = parseFloat(altoInput.value)||0;
+    if(w>0 && h>0){
+      drawPreviewFromFinal(
+        createFinalA4Canvas(img, cmToPx(w), cmToPx(h))
+      );
+    }
+  } catch(e){
+    thumbInfo.textContent="No se pudo cargar.";
+  }
+});
+
+/* Tips */
+document.querySelectorAll('.tip-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    altoInput.value = item.dataset.recommended;
+    item.animate(
+      [{transform:"translateY(0)"},{transform:"translateY(-4px)"},{transform:"translateY(0)"}],
+      {duration:300}
+    );
+  });
+});
+
+/* Sidebar toggle */
+toggleSidebar.addEventListener('click',()=>{
+  const collapsed = sidebar.classList.toggle("collapsed");
+  toggleSidebar.textContent = collapsed ? "Mostrar panel" : "Ocultar panel";
+});
+
 </script>
 </body>
 </html>
+
