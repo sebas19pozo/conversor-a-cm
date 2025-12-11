@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Imagen sobre A4</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app-container">
+  <h2 id="main-title">Sube imagen → Ajustar tamaño → Colocar en A4 → Descargar</h2>
+
+  <div class="input-group">
+    <label for="imagenInput">Selecciona tu imagen:</label>
+    <input type="file" id="imagenInput" class="input-file" accept="image/*">
+  </div>
+
+  <div class="input-group">
+    <label for="anchoCm">Ancho deseado de la imagen (cm):</label>
+    <input type="number" id="anchoCm" class="input-number" step="0.1" placeholder="Ej: 10">
+  </div>
+
+  <div class="input-group">
+    <label for="altoCm">Alto deseado de la imagen (cm):</label>
+    <input type="number" id="altoCm" class="input-number" step="0.1" placeholder="Ej: 15">
+  </div>
+
+  <button id="procesarBtn" class="btn">Procesar y descargar A4</button>
+
+  <div id="preview-container">
+    <canvas id="previewCanvas"></canvas>
+  </div>
+
+  <!-- --- Añadir justo antes de cerrar #app-container --- -->
+    <div id="tips-container">
+    <h3>📌 Consejos de tamaño</h3>
+    <ul class="tips-list">
+        <li>Si quieres 9 cm de alto, coloca 12 cm en el formulario.</li>
+        <li>Si quieres 8 cm de alto, coloca 10 cm en el formulario.</li>
+        <li>Si quieres 10 cm de alto, coloca 14 cm en el formulario.</li>
+    </ul>
+    </div>
+
+</div>
+
+<script>
+const DPI = 300;
+function cmToPx(cm) { return Math.round(cm * (DPI / 2.54)); }
+const A4_WIDTH_PX  = cmToPx(21);
+const A4_HEIGHT_PX = cmToPx(29.7);
+
+document.getElementById('procesarBtn').addEventListener('click', async () => {
+    const inputFile = document.getElementById('imagenInput').files[0];
+    const anchoCm = parseFloat(document.getElementById('anchoCm').value);
+    const altoCm = parseFloat(document.getElementById('altoCm').value);
+
+    if (!inputFile || !anchoCm || !altoCm) {
+        alert('Sube una imagen y completa ancho/alto en cm.');
+        return;
+    }
+
+    const img = await loadImageFromFile(inputFile);
+
+    // Redimensionar al tamaño exacto que indique el usuario
+    const targetW = cmToPx(anchoCm);
+    const targetH = cmToPx(altoCm);
+    const resizedW = targetW;
+    const resizedH = targetH;
+
+    const resizedCanvas = document.createElement('canvas');
+    resizedCanvas.width = resizedW;
+    resizedCanvas.height = resizedH;
+    const rctx = resizedCanvas.getContext('2d');
+    rctx.drawImage(img, 0, 0, resizedW, resizedH);
+
+    // Crear A4 blanco y pegar imagen centrada
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = A4_WIDTH_PX;
+    finalCanvas.height = A4_HEIGHT_PX;
+    const fctx = finalCanvas.getContext('2d');
+    fctx.fillStyle = 'white';
+    fctx.fillRect(0, 0, A4_WIDTH_PX, A4_HEIGHT_PX);
+
+    const offsetX = Math.round((A4_WIDTH_PX - resizedW) / 2);
+    const offsetY = Math.round((A4_HEIGHT_PX - resizedH) / 2);
+    fctx.drawImage(resizedCanvas, offsetX, offsetY);
+
+    // Mostrar preview en canvas opcional
+    const previewCanvas = document.getElementById('previewCanvas');
+    previewCanvas.width = A4_WIDTH_PX / 3; // escala para preview
+    previewCanvas.height = A4_HEIGHT_PX / 3;
+    const pctx = previewCanvas.getContext('2d');
+    pctx.drawImage(finalCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+
+    // Descargar
+    const link = document.createElement('a');
+    link.download = 'A4_con_imagen.png';
+    link.href = finalCanvas.toDataURL('image/png');
+    link.click();
+});
+
+function loadImageFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+    });
+}
+</script>
+</body>
+</html>
